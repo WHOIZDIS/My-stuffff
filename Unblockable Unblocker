@@ -1,0 +1,48 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+
+// Note: This executable must be run as Administrator (Windows) or root (Linux/macOS)
+int main() {
+#ifdef _WIN32
+    std::string hostsPath = "C:\\Windows\\System32\\drivers\\etc\\hosts";
+#else
+    std::string hostsPath = "/etc/hosts";
+#endif
+
+    std::string websiteToUnblock = "blockedwebsite.com";
+    std::ifstream fileIn(hostsPath);
+    if (!fileIn.is_open()) {
+        std::cerr << "Error: Could not open hosts file. Please run as Administrator/root.\n";
+        return 1;
+    }
+
+    std::vector<std::string> lines;
+    std::string line;
+    bool altered = false;
+
+    // Read through the file and skip or comment out the block rules
+    while (std::getline(fileIn, line)) {
+        if (line.find(websiteToUnblock) != std::string::npos && line[0] != '#') {
+            // Comment out the blocking rule to unblock it
+            lines.push_back("# " + line);
+            altered = true;
+        } else {
+            lines.push_back(line);
+        }
+    }
+    fileIn.close();
+
+    if (altered) {
+        std::ofstream fileOut(hostsPath);
+        for (const auto& l : lines) {
+            fileOut << l << "\n";
+        }
+        std::cout << "Successfully unblocked " << websiteToUnblock << "\n";
+    } else {
+        std::cout << "Website was not actively blocked in the hosts file.\n";
+    }
+
+    return 0;
+}
